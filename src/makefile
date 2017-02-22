@@ -46,7 +46,7 @@ LIBTIFF_VERSION=4.0.6
 # path configuration
 PREFIX=/Applications/Postgres.app/Contents/Versions/$(POSTGRES_MAJOR_VERSION)
 SHAREDPREFIX=/Applications/Postgres.app/Contents/Versions/shared
-PATH=$(PREFIX)/bin:/bin:/usr/bin:/opt/local/bin
+PATH=$(PREFIX)/bin:/bin:/usr/bin:/opt/local/bin:/usr/local/bin
 
 #compiler options
 MACOSX_DEPLOYMENT_TARGET=10.7
@@ -72,12 +72,12 @@ postgresql: $(PREFIX)/bin/psql
 $(PREFIX)/bin/psql: postgresql-$(POSTGRES_VERSION)/GNUmakefile
 	make -C "postgresql-$(POSTGRES_VERSION)" all contrib
 	make -C "postgresql-$(POSTGRES_VERSION)" install
-	
+
 # setting PATH is to make sure we find the right xml2-config
 # the --with-includes and --with-libraries options are necessary so
 # that postgres will be compiled and linked against our own versions
 # of libraries like openssl, instead of system provided versions
-postgresql-$(POSTGRES_VERSION)/GNUmakefile: $(SHAREDPREFIX)/lib/libssl.dylib $(SHAREDPREFIX)/lib/libxml2.dylib postgresql-$(POSTGRES_VERSION)/configure 
+postgresql-$(POSTGRES_VERSION)/GNUmakefile: $(SHAREDPREFIX)/lib/libssl.dylib $(SHAREDPREFIX)/lib/libxml2.dylib postgresql-$(POSTGRES_VERSION)/configure
 	cd "postgresql-$(POSTGRES_VERSION)" && export PATH="$(PREFIX)/bin:$$PATH" && ./configure --prefix="$(PREFIX)" --with-includes="$(SHAREDPREFIX)/include" --with-libraries="$(SHAREDPREFIX)/lib" --enable-thread-safety --with-openssl --with-gssapi --with-bonjour --with-libxml --with-libxslt --with-perl --with-python --with-readline --with-uuid=e2fs
 # patch makefile to fix python linker flags
 	cd postgresql-$(POSTGRES_VERSION)/src; mv Makefile.global Makefile.global.old; sed 's@^python_libspec.*@python_libspec = '"`python-config --ldflags`"'@' Makefile.global.old >Makefile.global
@@ -86,13 +86,13 @@ postgresql-$(POSTGRES_VERSION)/configure: postgresql-$(POSTGRES_VERSION).tar.bz2
 	$(TAR) "postgresql-$(POSTGRES_VERSION).tar.bz2"
 	touch $@
 
-postgresql-$(POSTGRES_VERSION).tar.bz2:	
+postgresql-$(POSTGRES_VERSION).tar.bz2:
 	$(CURL) "https://ftp.postgresql.org/pub/source/v$(POSTGRES_VERSION)/postgresql-$(POSTGRES_VERSION).tar.bz2"
 
 clean-postgresql:
 	rm -Rf postgresql-$(POSTGRES_VERSION)
-	
-		
+
+
 #########################
 ####### OpenSSL #########
 #########################
@@ -112,7 +112,7 @@ openssl-${OPENSSL_VERSION}/Configure: openssl-${OPENSSL_VERSION}.tar.gz
 
 openssl-${OPENSSL_VERSION}.tar.gz:
 	$(CURL) "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz"
-	
+
 clean-openssl:
 	rm -Rf "openssl-${OPENSSL_VERSION}"
 
@@ -133,10 +133,10 @@ libxml2-${LIBXML2_VERSION}/Makefile: libxml2-${LIBXML2_VERSION}/configure
 libxml2-${LIBXML2_VERSION}/configure: libxml2-${LIBXML2_VERSION}.tar.gz
 	$(TAR) libxml2-${LIBXML2_VERSION}.tar.gz
 	touch $@
-	
+
 libxml2-${LIBXML2_VERSION}.tar.gz:
 	$(CURL) "ftp://xmlsoft.org/libxml2/libxml2-${LIBXML2_VERSION}.tar.gz"
-	
+
 clean-libxml2:
 	rm -Rf "libxml2-$(LIBXML2_VERSION)"
 
@@ -253,7 +253,7 @@ gdal-$(GDAL_VERSION)/GNUMakefile: gdal-$(GDAL_VERSION)/autogen.sh  $(SHAREDPREFI
 
 gdal-$(GDAL_VERSION)/autogen.sh: gdal-${GDAL_VERSION}.tar.gz
 	$(TAR) gdal-${GDAL_VERSION}.tar.gz
-	touch $@	
+	touch $@
 
 gdal-${GDAL_VERSION}.tar.gz:
 	$(CURL) "http://download.osgeo.org/gdal/${GDAL_VERSION}/gdal-${GDAL_VERSION}.tar.gz"
@@ -286,7 +286,7 @@ proj-${PROJ_VERSION}.tar.gz:
 
 proj-datumgrid-${DATUMGRID_VERSION}.zip:
 	$(CURL) "http://download.osgeo.org/proj/proj-datumgrid-${DATUMGRID_VERSION}.zip"
-	
+
 clean-libproj:
 	rm -Rf proj-${PROJ_VERSION}
 
@@ -376,14 +376,14 @@ clean-postgis:
 plv8: $(SHAREDPREFIX)/lib/postgresql/plv8.so
 
 $(SHAREDPREFIX)/lib/postgresql/plv8.so: plv8-${PLV8_VERSION}/Makefile $(SHAREDPREFIX)/lib/libv8.dylib
-	export PGHOME="$(SHAREDPREFIX)"; export CC=clang; export CXX=clang++; export V8_SRCDIR="$(CURDIR)/v8-${V8_VERSION}"; make -C plv8-${PLV8_VERSION} install 
+	export PGHOME="$(SHAREDPREFIX)"; export CC=clang; export CXX=clang++; export V8_SRCDIR="$(CURDIR)/v8-${V8_VERSION}"; make -C plv8-${PLV8_VERSION} install
 #	/usr/bin/install_name_tool -change "/usr/local/lib/libv8.dylib" "$(SHAREDPREFIX)/lib/libv8.dylib" "$(SHAREDPREFIX)/lib/postgresql/plv8.so"
 
 
 plv8-${PLV8_VERSION}/Makefile: plv8-${PLV8_VERSION}.tar.gz
 	$(TAR) $<
 	touch $@
-	
+
 plv8-${PLV8_VERSION}.tar.gz:
 	/usr/bin/curl -L10 --silent --show-error -o $@ https://github.com/plv8/plv8/archive/v${PLV8_VERSION}.tar.gz
 
